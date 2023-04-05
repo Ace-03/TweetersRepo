@@ -5,6 +5,7 @@ using UnityEngine;
 public class Bird : MonoBehaviour
 {
     [SerializeField] float _launchForce = 500;
+    [SerializeField] float _maxDragDistance = 5;
 
     Vector2 _startPosition;
     Rigidbody2D _rigidbody2D;
@@ -42,12 +43,38 @@ public class Bird : MonoBehaviour
     void OnMouseDrag()
     {
         Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        transform.position = new Vector3(mousePosition.x, mousePosition.y, transform.position.z);
+        Vector2 desiredPostion = mousePosition;
+        
+        float distance = Vector2.Distance(desiredPostion, _startPosition);
+        if (distance > _maxDragDistance)
+        {
+            Vector2 direction = desiredPostion - _startPosition;
+            direction.Normalize();
+            desiredPostion = _startPosition + (direction * _maxDragDistance);
+        }
+
+        if (desiredPostion.x > _startPosition.x)
+            desiredPostion.x = _startPosition.x;
+
+        _rigidbody2D.position = desiredPostion;
     }
 
     // Update is called once per frame
     void Update()
     {
         
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        StartCoroutine(ResetAfterDelay());
+    }
+
+    IEnumerator ResetAfterDelay()
+    {
+        yield return new WaitForSeconds(3);
+        _rigidbody2D.position = _startPosition;
+        _rigidbody2D.isKinematic = true;
+        _rigidbody2D.velocity = Vector2.zero;
     }
 }
